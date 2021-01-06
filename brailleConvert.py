@@ -1,5 +1,5 @@
 import hgtk.const
-
+import asyncio
 '''
 이 프로그램은 점자 변환기입니다. 다음과 같은 자료를 참고하여 만들었습니다.
 
@@ -183,4 +183,4 @@ async def braille(message):
     print(answerstring)  # 출력
 
 if __name__ == '__main__':
-    braille(input('점자 변환기:  '))
+    asyncio.run(braille(input('점자 변환기:  ')))
