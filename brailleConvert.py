@@ -66,7 +66,6 @@ letter = HangulLetter('', '', '', -1)  # abbreviation 함수와의 호환을 위
 async def abbreviation(cho, jung, jong, repl, mode='jj'):  # 점자 약자 변환을 위한 함수(한·점
     global letter
     if mode == 'cj':  # 초성 + 중성 약자
-        print(letter.num, letter.cho, letter.jung, letter.jong)
         if letter.cho not in ['ㄱ', 'ㅅ', 'ㅆ'] and letter.jung == 'ㅏ' and letter.jong == '' and letter.num != len(each_letter_list) - 1:
             if each_letter_list[letter.num + 1].cho == 'ㅇ':
                 pass  # 고유 약자 점자가 있는 가, 사, 싸를 제외하고 나머지 초성 + ㅏ는 뒤에 ㅇ+모음이 오면 ㅏ를 생략하지 않음 (한·점 제17항)
