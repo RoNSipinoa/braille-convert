@@ -1,5 +1,7 @@
 import hgtk.const
 import asyncio
+import re
+
 '''
 이 프로그램은 점자 변환기입니다. 다음과 같은 자료를 참고하여 만들었습니다.
 
@@ -37,11 +39,16 @@ abbr_list_braille_add_jj = ['⠹⠁', '⠹⠄', '⠾⠅', '⠾⠴', '⠞⠁', '�
 abbr_list_cho_cjj = ['ㄱ', 'ㄲ']  # 초성 + 중성 + 종성 꼴 약자 리스트 - 초성 (한·점 제12항, 제14항)
 abbr_list_jung_cjj = ['ㅓ', 'ㅓ']  # 초성 + 중성 + 종성 꼴 약자 리스트 - 중성 (한·점 제12항, 제14항)
 abbr_list_jong_cjj = ['ㅅ', 'ㅅ']  # 초성 + 중성 + 종성 꼴 약자 리스트 - 종성 (한·점 제12항, 제14항)
-abbr_list_braille_cjj = ['⠸⠎', '⠠⠸⠎']  # 초성 + 중성 + 종성 꼴 약자 리스트 - 점자 (한·점 제12항, 제14항)
+# 초성 + 중성 + 종성 꼴 약자 리스트 - 점자 (한·점 제12항, 제14항)
+abbr_list_braille_cjj = ['⠸⠎', '⠠⠸⠎']
+abbr_word_list_letter = ['그래서', '그러나', '그러면', '그러므로',
+                         '그런데', '그리고', '그리하여']  # 약어 목록 - 한글 (한·점 제16항)
+abbr_word_list_braille = ['⠁⠎', '⠁⠉', '⠁⠒', '⠁⠢',
+                          '⠁⠝', '⠁⠥', '⠁⠱']  # 약어 목록 - 점자 (한·점 제 16항)
 normal_list_letter = ['.', '?', '!', ',', '·', ':', ';', '/', '“', '”', '‘', '’', '(', ')', '{', '}', '[', ']', '『', '《', '』', '》',
-                    '「', '〈', '」', '〉', '-', '―', '~', '*', '※', '\'', '〃', 'ː', '￦', '￠', '$', '￡', '￥', '€']  # 일반 문자 리스트 (한·점 제44항~제72항)
-normal_list_braille = ['⠲', '⠦', '⠖', '⠐', '⠐⠆', '⠐⠂', '⠰⠆', '⠸⠌', '⠦', '⠴', '⠠⠦', '⠴⠄', '⠦⠄','⠠⠴', '⠦⠂', '⠐⠴', '⠦⠆', '⠰⠴', '⠰⠦', '⠰⠦', '⠴⠆', '⠴⠆',
-                    '⠐⠦', '⠐⠦', '⠴⠂', '⠴⠂', '⠤', '⠤⠤', '⠤⠤', '⠔⠔', '⠸⠔', '⠄', '⠰⠆', '⠠⠄', '⠈⠺', '⠈⠉', '⠈⠙', '⠈⠇', '⠈⠽', '⠈⠑'] # # 일반 문자 리스트 (한·점 제44항~제72항)
+                      '「', '〈', '」', '〉', '-', '―', '~', '*', '※', '\'', '〃', 'ː', '￦', '￠', '$', '￡', '￥', '€']  # 일반 문자 리스트 (한·점 제44항~제72항)
+normal_list_braille = ['⠲', '⠦', '⠖', '⠐', '⠐⠆', '⠐⠂', '⠰⠆', '⠸⠌', '⠦', '⠴', '⠠⠦', '⠴⠄', '⠦⠄', '⠠⠴', '⠦⠂', '⠐⠴', '⠦⠆', '⠰⠴', '⠰⠦', '⠰⠦', '⠴⠆', '⠴⠆',
+                       '⠐⠦', '⠐⠦', '⠴⠂', '⠴⠂', '⠤', '⠤⠤', '⠤⠤', '⠔⠔', '⠸⠔', '⠄', '⠰⠆', '⠠⠄', '⠈⠺', '⠈⠉', '⠈⠙', '⠈⠇', '⠈⠽', '⠈⠑']  # 일반 문자 리스트 (한·점 제44항~제72항)
 each_letter_list = []  # 각각의 글자 객체가 들어가는 리스트
 
 
@@ -70,7 +77,7 @@ class NormalLetter:  # 한글이 아닌 문자 객체
 letter = HangulLetter('', '', '', -1)  # abbreviation 함수와의 호환을 위한 잉여 letter 객체
 
 
-async def abbreviation(cho, jung, jong, repl, mode='jj'):  # 점자 약자 변환을 위한 함수(한·점 제12항)
+def abbreviation(cho, jung, jong, repl, mode='jj'):  # 점자 약자 변환을 위한 함수(한·점 제12항)
     global letter
     if mode == 'cj':  # 초성 + 중성 약자
         if letter.cho not in ['ㄱ', 'ㅅ', 'ㅆ'] and letter.jung == 'ㅏ' and letter.jong == '' and letter.num != len(each_letter_list) - 1:
@@ -101,7 +108,7 @@ async def abbreviation(cho, jung, jong, repl, mode='jj'):  # 점자 약자 변�
                 letter.braille = [letter.cho_braille, repl]
 
 
-async def braille(message):
+def braille(message):
     answerstring = ''
 
     global letter
@@ -180,17 +187,43 @@ async def braille(message):
             pass
         else:
             for i in range(len(abbr_list_cho_cj)):  # 초성 + 중성 약자 변환 (한·점 제12항~제14항)
-                await abbreviation(abbr_list_cho_cj[i], 'ㅏ', '', abbr_list_braille_cj[i], 'cj')
+                abbreviation(abbr_list_cho_cj[i], 'ㅏ', '', abbr_list_braille_cj[i], 'cj')
             for i in range(len(abbr_list_jung_jj)):  # 중성 + 종성 약자 변환 (한·점 제12항~제15항)
-                await abbreviation('', abbr_list_jung_jj[i], abbr_list_jong_jj[i], abbr_list_braille_jj[i], 'jj')
+                abbreviation('', abbr_list_jung_jj[i], abbr_list_jong_jj[i], abbr_list_braille_jj[i], 'jj')
             for i in range(len(abbr_list_jung_add_jj)):  # 중성 + 종성 약자 변환 (한·점 제12항~제15항)
-                await abbreviation('', abbr_list_jung_add_jj[i], abbr_list_jong_add_jj[i], abbr_list_braille_add_jj[i], 'jj')
+                abbreviation('', abbr_list_jung_add_jj[i], abbr_list_jong_add_jj[i], abbr_list_braille_add_jj[i], 'jj')
             for i in ['ㅅ', 'ㅈ', 'ㅊ', 'ㅆ', 'ㅉ']:
                 # 성, 정, 청, 썽, 쩡은 기존 'ㅕ+ㅇ(⠻)'의 약자를 사용하여 표기 (한·점 제16항)
-                await abbreviation(i, 'ㅓ', 'ㅇ', '⠻')
+                abbreviation(i, 'ㅓ', 'ㅇ', '⠻')
             for i in range(len(abbr_list_jung_cjj)):
                 # '것'과 '껏'은 고유의 약자 사용 (한·점 제12항, 제14항)
-                await abbreviation(abbr_list_cho_cjj[i], abbr_list_jung_cjj[i], abbr_list_jong_cjj[i], abbr_list_braille_cjj[i], 'cjj')
+                abbreviation(abbr_list_cho_cjj[i], abbr_list_jung_cjj[i], abbr_list_jong_cjj[i], abbr_list_braille_cjj[i], 'cjj')
+
+    for j in abbr_word_list_letter:
+        m = re.search(f'^({j})', message.content[4:])
+        n = re.search(f'[^가-힣]({j})', message.content[4:])
+        if m is not None:  # 약어 적용 - 문두에 나올 시
+            k = m.start()  # 인덱스 값
+            for i in range(len(j)):
+                each_letter_list.pop(k)
+            t = HangulLetter('', '', '', k)
+            t.braille = [
+                abbr_word_list_braille[abbr_word_list_letter.index(j)]]
+            each_letter_list.insert(k, t)
+            for i in range(len(each_letter_list)):
+                each_letter_list[i].num = i  # 인덱스 재설정
+        elif n is not None:  # 약어 적용 - 어중에 나올 시
+            k = n.start() + 1  # 인덱스 값
+            for i in range(len(j)):
+                each_letter_list.pop(k)
+            t = HangulLetter('', '', '', k)
+            t.braille = [
+                abbr_word_list_braille[abbr_word_list_letter.index(j)]]
+            each_letter_list.insert(k, t)
+            for i in range(len(each_letter_list)):
+                each_letter_list[i].num = i  # 인덱스 재설정
+        else:
+            pass
 
     for letter in each_letter_list:
         for k in letter.braille:
@@ -199,4 +232,4 @@ async def braille(message):
     print(answerstring)  # 출력
 
 if __name__ == '__main__':
-    asyncio.run(braille(input('점자 변환기:  ')))
+    braille(input('점자 변환기:  '))
