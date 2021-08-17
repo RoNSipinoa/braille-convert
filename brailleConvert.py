@@ -1,5 +1,4 @@
 import hgtk.const
-import asyncio
 import re
 
 '''
